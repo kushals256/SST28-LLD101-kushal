@@ -1,4 +1,4 @@
-public class Main {
+public class Main5 {
     public static void main(String[] args) {
         System.out.println("=== Export Demo ===");
 
@@ -6,10 +6,12 @@ public class Main {
         Exporter pdf = new PdfExporter();
         Exporter csv = new CsvExporter();
         Exporter json = new JsonExporter();
+        Exporter doc = new DocExporter();
 
         System.out.println("PDF: " + safe(pdf, req));
         System.out.println("CSV: " + safe(csv, req));
         System.out.println("JSON: " + safe(json, req));
+        System.out.println("DOC: " + safe(doc, req));
     }
 
     private static String safe(Exporter e, ExportRequest r) {

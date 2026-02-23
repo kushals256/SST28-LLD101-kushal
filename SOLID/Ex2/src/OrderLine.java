@@ -3,6 +3,7 @@ public class OrderLine {
     public final int qty;
 
     public OrderLine(String itemId, int qty) {
-        this.itemId = itemId; this.qty = qty;
+        this.itemId = itemId;
+        this.qty = qty;
     }
 }

@@ -1,13 +1,26 @@
 import java.nio.charset.StandardCharsets;
 
-public class PdfExporter extends Exporter {
+public class PdfExporter implements Exporter {
+
+    @Override
+    public boolean supports(ExportRequest req) {
+        return req.body == null || req.body.length() <= 20;
+    }
+
     @Override
     public ExportResult export(ExportRequest req) {
-        // LSP violation: tightens precondition arbitrarily
-        if (req.body != null && req.body.length() > 20) {
+        if (!supports(req)) {
             throw new IllegalArgumentException("PDF cannot handle content > 20 chars");
         }
-        String fakePdf = "PDF(" + req.title + "):" + req.body;
-        return new ExportResult("application/pdf", fakePdf.getBytes(StandardCharsets.UTF_8));
+
+        String body = req.body == null ? "" : req.body;
+
+        String pdf = "PDF Document\n"
+                + req.title + "\n"
+                + body;
+
+        return new ExportResult(
+                "application/pdf",
+                pdf.getBytes(StandardCharsets.UTF_8));
     }
 }

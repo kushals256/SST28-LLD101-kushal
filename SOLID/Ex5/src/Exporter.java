@@ -1,4 +1,5 @@
-public abstract class Exporter {
-    // implied "contract" but not enforced (smell)
-    public abstract ExportResult export(ExportRequest req);
+public interface Exporter {
+    boolean supports(ExportRequest req);
+
+    ExportResult export(ExportRequest req);
 }

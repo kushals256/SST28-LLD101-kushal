@@ -6,4 +6,8 @@ public class ExportResult {
         this.contentType = contentType;
         this.bytes = bytes;
     }
+
+    public static ExportResult error(String message) {
+        return new ExportResult("text/plain", message.getBytes());
+    }
 }
