@@ -8,13 +8,15 @@ public class ClubConsole {
     }
 
     public void run() {
-        ClubAdminTools treasurer = new TreasurerTool(ledger);
-        ClubAdminTools secretary = new SecretaryTool(minutes);
-        ClubAdminTools lead = new EventLeadTool(events);
+        Treasurer treasurer = new TreasurerTool(ledger);
+        Secretary secretary = new SecretaryTool(minutes);
+        EventLead lead = new EventLeadTool(events);
+        PublicityLead publicityLead = new PublicityLeadTool(events);
 
         treasurer.addIncome(5000, "sponsor");
         secretary.addMinutes("Meeting at 5pm");
         lead.createEvent("HackNight", 2000);
+        publicityLead.createEvent("Party", 3000);
 
         System.out.println("Summary: ledgerBalance=" + ledger.balanceInt() + ", minutes=" + minutes.count() + ", events=" + lead.getEventsCount());
     }

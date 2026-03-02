@@ -5,9 +5,9 @@ public class SmsSender extends NotificationSender {
 
     @Override
     protected SendResult validateSpecific(Notification n) {
-        if (n.phone == null)
+        if (n.phone == null) 
             return SendResult.failure("SMS ERROR: phone must not be null");
-
+        
         return SendResult.success();
     }
 

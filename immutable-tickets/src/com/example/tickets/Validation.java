@@ -9,10 +9,11 @@ import java.util.regex.Pattern;
  */
 public final class Validation {
 
-    private static final Pattern EMAIL = Pattern.compile("^[^@\s]+@[^@\s]+\.[^@\s]+$");
+    private static final Pattern EMAIL = Pattern.compile("^[^@\s]+@[^@\s]+\\.[^@\s]+$");
     private static final Pattern TICKET_ID = Pattern.compile("^[A-Z0-9-]+$");
 
-    private Validation() {}
+    private Validation() {
+    }
 
     public static void requireNonBlank(String value, String fieldName) {
         if (value == null || value.trim().isEmpty()) {
@@ -42,17 +43,25 @@ public final class Validation {
     }
 
     public static void requireOneOf(String value, String fieldName, String... allowed) {
-        if (value == null) return; // optional
+        if (value == null)
+            return; // optional
         for (String a : allowed) {
-            if (a.equals(value)) return;
+            if (a.equals(value))
+                return;
         }
         throw new IllegalArgumentException(fieldName + " must be one of: " + String.join(", ", allowed));
     }
 
     public static void requireRange(Integer value, int min, int max, String fieldName) {
-        if (value == null) return; // optional
+        if (value == null)
+            return; // optional
         if (value < min || value > max) {
             throw new IllegalArgumentException(fieldName + " must be between " + min + " and " + max);
         }
+    }
+
+    public static void requireTitle(String title) {
+        requireNonBlank(title, "title");
+        requireMaxLen(title, 80, "title");
     }
 }

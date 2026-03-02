@@ -21,12 +21,12 @@ public class CsvExporter implements Exporter {
 
         return new ExportResult(
                 "text/csv",
-                csv.getBytes(StandardCharsets.UTF_8));
+                csv.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private String escape(String value) {
-        if (value == null)
-            return "";
+        if (value == null) return "";
         return "\"" + value + "\"";
     }
 }

@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class Main2 {
+public class Main {
     public static void main(String[] args) {
         System.out.println("=== Cafeteria Billing ===");
 
@@ -21,10 +21,11 @@ public class Main2 {
 
         PolicyResolver resolver = new PolicyResolver(taxMap, discountMap);
         CafeteriaSystem sys = new CafeteriaSystem(menu, store, pricingService, resolver);
-
+        
         List<OrderLine> order = List.of(
                 new OrderLine("M1", 2),
-                new OrderLine("C1", 1));
+                new OrderLine("C1", 1)
+        );
 
         sys.checkout("student", order);
         sys.checkout("staff", order);

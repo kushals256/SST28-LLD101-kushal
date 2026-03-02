@@ -30,7 +30,8 @@ public class OnboardingService {
                 parsed.getName(),
                 parsed.getEmail(),
                 parsed.getPhone(),
-                parsed.getProgram());
+                parsed.getProgram()
+        );
 
         db.save(record);
 

@@ -5,9 +5,9 @@ public class WhatsAppSender extends NotificationSender {
 
     @Override
     protected SendResult validateSpecific(Notification n) {
-        if (n.phone == null || !n.phone.startsWith("+"))
+        if (n.phone == null || !n.phone.startsWith("+")) 
             return SendResult.failure("WA Error: phone must start with + and country code");
-
+        
         return SendResult.success();
     }
 

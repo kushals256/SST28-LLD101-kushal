@@ -6,7 +6,7 @@ public class PolicyResolver {
     private final Map<String, DiscountPolicy> discountPolicies;
 
     public PolicyResolver(Map<String, TaxPolicy> taxPolicies,
-            Map<String, DiscountPolicy> discountPolicies) {
+                          Map<String, DiscountPolicy> discountPolicies) {
         this.taxPolicies = taxPolicies;
         this.discountPolicies = discountPolicies;
     }
@@ -14,12 +14,14 @@ public class PolicyResolver {
     public TaxPolicy resolveTax(String customerType) {
         return taxPolicies.getOrDefault(
                 customerType.toLowerCase(),
-                new DefaultTaxPolicy());
+                new DefaultTaxPolicy()
+        );
     }
 
     public DiscountPolicy resolveDiscount(String customerType) {
         return discountPolicies.getOrDefault(
                 customerType.toLowerCase(),
-                new NoDiscountPolicy());
+                new NoDiscountPolicy()
+        );
     }
 }

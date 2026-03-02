@@ -9,9 +9,9 @@ public class SlackSender extends NotificationSender {
 
     @Override
     protected SendResult validateSpecific(Notification n) {
-        if (!validate(n))
+        if (!validate(n)) 
             return SendResult.failure("SLACK ERROR: missing recipient email");
-
+        
         return SendResult.success();
     }
 

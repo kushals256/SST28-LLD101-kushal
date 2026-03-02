@@ -1,4 +1,4 @@
-public class Main1 {
+public class Main {
     public static void main(String[] args) {
         System.out.println("=== Student Onboarding ===");
         Database db = new FakeDb();
@@ -14,4 +14,4 @@ public class Main1 {
         String raw2 = "name=Vikram;email=vikram@sst.edu;phone=9876543211;program=IT";
         svc.registerFromRawInput(raw2);
     }
-}
+}  

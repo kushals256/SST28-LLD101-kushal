@@ -8,10 +8,8 @@ public abstract class NotificationSender {
     }
 
     public final SendResult send(Notification n) {
-        if (n.body == null || n.body.isEmpty())
-            return SendResult.failure("Body is empty");
-        if (n.body.length() > config.maxLen)
-            return SendResult.failure("Body too long");
+        if (n.body == null || n.body.isEmpty()) return SendResult.failure("Body is empty");
+        if (n.body.length() > config.maxLen) return SendResult.failure("Body too long");
 
         SendResult subValidation = validateSpecific(n);
         if (!subValidation.isSuccess()) {

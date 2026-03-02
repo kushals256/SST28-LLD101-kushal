@@ -1,5 +1,5 @@
 public class DefaultTaxPolicy implements TaxPolicy {
-
+    
     @Override
     public double calculateTax(double amount) {
         return amount * 0.08;

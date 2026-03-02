@@ -22,12 +22,12 @@ public class JsonExporter implements Exporter {
 
         return new ExportResult(
                 "application/json",
-                json.getBytes(StandardCharsets.UTF_8));
+                json.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private String escape(String value) {
-        if (value == null)
-            return "";
+        if (value == null) return "";
         return value.replace("\"", "\\\"");
     }
 }

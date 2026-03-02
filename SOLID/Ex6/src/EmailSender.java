@@ -9,9 +9,9 @@ public class EmailSender extends NotificationSender {
 
     @Override
     protected SendResult validateSpecific(Notification n) {
-        if (!validate(n))
+        if (!validate(n)) 
             return SendResult.failure("EMAIL ERROR: invalid email address");
-
+        
         return SendResult.success();
     }
 

@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class ConsoleReporter {
+public class ConsoleReporter  {
 
     public static void printInput(String raw) {
         System.out.println("INPUT: " + raw);
@@ -21,8 +21,7 @@ public class ConsoleReporter {
 
     public static void printErrors(List<String> errors) {
         System.out.println("ERROR: cannot register");
-
-        for (String e : errors)
-            System.out.println("- " + e);
+        
+        for (String e : errors) System.out.println("- " + e);
     }
 }

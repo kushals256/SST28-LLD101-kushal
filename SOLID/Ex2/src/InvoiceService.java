@@ -11,9 +11,9 @@ public class InvoiceService {
     }
 
     public void generateInvoice(Menu menu,
-            List<OrderLine> lines,
-            TaxPolicy taxPolicy,
-            DiscountPolicy discountPolicy) {
+                              List<OrderLine> lines,
+                              TaxPolicy taxPolicy,
+                              DiscountPolicy discountPolicy) {
 
         String invId = "INV-" + (++invoiceSeq);
 
@@ -33,7 +33,8 @@ public class InvoiceService {
                 taxPolicy.getPercent(),
                 tax,
                 discount,
-                total);
+                total
+        );
 
         store.save(invId, invoice);
         System.out.print(invoice);

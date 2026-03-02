@@ -21,6 +21,7 @@ public class PdfExporter implements Exporter {
 
         return new ExportResult(
                 "application/pdf",
-                pdf.getBytes(StandardCharsets.UTF_8));
+                pdf.getBytes(StandardCharsets.UTF_8)
+        );
     }
 }

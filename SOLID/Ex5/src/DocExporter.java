@@ -9,7 +9,7 @@ public class DocExporter implements Exporter {
         if (!supports(req)) {
             throw new IllegalArgumentException("Unsupported export request");
         }
-
+        
         return new ExportResult("application/msword", req.body.getBytes());
     }
 }

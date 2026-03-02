@@ -18,6 +18,7 @@ public class StudentParser {
                 kv.getOrDefault("name", ""),
                 kv.getOrDefault("email", ""),
                 kv.getOrDefault("phone", ""),
-                kv.getOrDefault("program", ""));
+                kv.getOrDefault("program", "")
+        );
     }
 }
