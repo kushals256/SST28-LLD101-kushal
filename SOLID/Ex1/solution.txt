@@ -1,0 +1,77 @@
+1. The Core Problem with the Original Design
+Before the refactor, the OnboardingService.registerFromRawInput() method was what we call a "God Method." It was attempting to do everything at once:
+
+Parsing: Extracting the name, email, phone, and program values from a raw string that was separated by semicolons (name=Riya;email=riya@sst.edu;...).
+Validating: Hardcoding checks for empty fields, email formats (@), and program validity.
+Generating IDs: Directly calculating the next SST-2026-X formatted ID.
+Persistence: Saving the logic directly via a hardcoded FakeDb.
+Presentation: Using raw System.out.println commands to log the input strings, error messages, success messages, and a tabular database dump.
+This violated the Single Responsibility Principle (SRP), which essentially states that a class should do one thing and have only one reason to change. Because everything was in one place, if we ever wanted to change the output reporting from a terminal to a web JSON API, we would be forced to modify the same class handles string parsing and email validation.
+
+2. How the Solution Was Architected (The Refactor)
+We solved this problem by extracting those hardcoded responsibilities into distinct, focused classes. Here is a breakdown of the new architecture:
+
+A. Extracted Parsing (
+
+StudentParser.java
+ & 
+
+ParsedStudent.java
+)
+We created a 
+
+StudentParser
+ whose sole purpose is to accept a raw input string and convert it into a structured Data Transfer Object (DTO) called ParsedStudent.
+
+Benefit: The rest of the onboarding system no longer has to deal with string splitting or parsing logic. It operates on a clean, safe ParsedStudent object.
+B. Extracted Validation (
+
+StudentValidator.java
+ & 
+
+ProgramList.java
+)
+We moved all the if/else validation logic into 
+
+StudentValidator
+. It takes a ParsedStudent and returns a clean List<String> of error messages. We also extracted the list of allowed programs into a ProgramList.
+
+Benefit: If we need to add a new rule (like validating phone numbers with regex), we only verify the 
+
+StudentValidator
+. We can also unit test validations trivially without the database or console getting in the way.
+C. Decoupled Persistence (
+
+Database.java
+ interface)
+Instead of forcing the core workflow to rely on FakeDb, we introduced a clean 
+
+Database
+ interface with functions like 
+
+save()
+ and 
+
+count()
+. The FakeDb now natively implements this interface.
+
+Benefit: Using Dependency Inversion, the 
+
+OnboardingService
+ now depends only on an interface. We can effortlessly swap FakeDb with a real SqlDatabase in the future without changing a single line inside the onboarding logic.
+D. Extracted Presentation (
+
+ConsoleReporter.java
+ & 
+
+TextTable.java
+)
+We removed every single System.out.println() from the onboarding logic and moved them into a dedicated 
+
+ConsoleReporter
+ class.
+
+Benefit: If we wish to change the visual styling or transition from console output to a formal logging system, we only touch 
+
+ConsoleReporter
+.

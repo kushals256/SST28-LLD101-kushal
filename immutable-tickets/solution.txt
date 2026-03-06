@@ -1,0 +1,86 @@
+instructions and your implemention in the immutable-tickets codebase, here is a detailed breakdown of the problem, the objective, and exactly how the solution was derived step-by-step.
+
+1. The Core Problem
+The original 
+
+IncidentTicket
+ was entirely mutable. It suffered from several architectural flaws:
+
+Public Setters: Anyone could change the state of a ticket after it was created (e.g., calling ticket.setPriority("CRITICAL")), making it impossible to reliable track changes or maintain consistent audit logs.
+Scattered Validation: Checks for valid emails, ticket IDs, or SLA times were scattered across files like 
+
+TicketService.java
+. It was very easy for a developer to forget a validation check when creating or mutating a ticket.
+Internal State Leakage: The 
+
+tags
+ list was returned directly. Even without a setter, someone could call ticket.getTags().add("Malicious Tag"), silently altering the ticket's state because the underlying memory reference was shared.
+2. The Goal
+To resolve these issues, the objective was to switch to an Immutable Design using the Builder Pattern. An immutable object cannot be altered once it's created. If you want to "change" a property, you must create a completely new copy of the object with the altered property.
+
+3. Step-by-Step Breakdown of the Solution
+Step 1: Locking Down the State (Immutability)
+In 
+
+IncidentTicket.java
+, the first step was making sure the object's properties could never change.
+
+private final fields: Every property was marked as private final so they can only be assigned exactly once upon construction.
+Removing Setters: All public setX() methods were deleted.
+Defensive Copying: This is the most crucial part of immutability for collections. In the constructor, instead of just taking the List<String> passed to it, the code creates a brand-new list: this.tags = new ArrayList<>(b.tags).
+Safe Getters: Similarly, the 
+
+getTags()
+ method was updated to return new ArrayList<>(tags). This ensures that if external code tries to modify the returned list, they are only modifying a copy, leaving the ticket's internal 
+
+tags
+ list perfectly safe.
+Step 2: Implementing the Builder Pattern
+Because the fields are all final, you can only set them via a constructor. But a constructor with 10 arguments (id, title, email, priority, etc.) is difficult to read and manage. The solution was the 
+
+Builder
+ pattern.
+
+A nested static 
+
+Builder
+ class was created with mutable versions of all the ticket properties.
+Fluent builder methods were added (e.g., public Builder title(String title) { this.title = title; return this; }) so you can cleanly chain assignments together.
+The only way to create an 
+
+IncidentTicket
+ now is by calling new IncidentTicket(Builder b), which is a private constructor that safely transfers the values from the builder to the fully locked-down ticket fields.
+Step 3: Centralizing Validation
+Instead of validating some things in 
+
+TicketService
+ and others elsewhere, all validation was moved completely into Builder.build().
+
+Right before 
+
+build()
+ returns the new IncidentTicket(this), it executes static checks using 
+
+Validation.java
+ (like requireTicketId, requireEmail, requireRange for SLA minutes, etc.).
+This acts as a "tollbooth." It is now fundamentally impossible to create an invalid 
+
+IncidentTicket
+. If the data is bad, it will throw an exception right at the moment of creation, no matter where in the codebase the builder is being called from.
+Step 4: Refactoring "Updates" (The .from() method)
+Because the objects are immutable, you can't just mutate them when things escalate. The elegant solution introduced here is the 
+
+from(IncidentTicket t)
+ method inside the 
+
+Builder
+.
+
+This method acts as a prototype copier. It takes an existing ticket, pre-fills the 
+
+Builder
+ with all of that ticket’s values, and lets you override just the pieces you want.
+Example in 
+
+TicketService.java
+: To escalate a ticket to critical, the code no longer does t.setPriority("CRITICAL"). Instead, it does:

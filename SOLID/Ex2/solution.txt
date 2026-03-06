@@ -1,0 +1,49 @@
+### 1. The Core Problem with the Original Design
+
+Before the refactor, the `CafeteriaSystem.checkout()` method was trying to do everything at once:
+- **Pricing:** Iterating through the order lines and multiplying price by quantity to find a subtotal.
+- **Tax Rules:** Hardcoding the 5% tax or other conditions directly into the checkout logic.
+- **Discount Rules:** Hardcoding conditions (like returning 10.0 if subtotal > 150) right in the middle of the code.
+- **Presentation:** Constructing the entire visual string for the invoice, inserting newlines, formatting currencies (`%.2f`), and printing it out to the console.
+- **Persistence:** Saving the invoice string directly to a physical or in-memory file store.
+
+This violated the **Single Responsibility Principle (SRP)**. Whenever tax laws changed, or a new discount strategy for staff was needed, or the invoice needed a different visual format, the main checkout logic had to be modified.
+
+### 2. How the Solution Was Architected (The Refactor)
+
+We solved this problem by extracting those hardcoded responsibilities into focused classes and abstract interfaces. Here is a breakdown of the new architecture:
+
+#### A. Extracted Pricing (`PricingService.java`)
+We created a `PricingService` whose sole responsibility is to calculate the subtotal of an order given a menu and a list of order lines.
+- **Benefit:** The core `InvoiceService` just asks the pricing service for the total cost, preventing the core from looping through menus itself.
+
+#### B. Abstracted Rules (`TaxPolicy.java` & `DiscountPolicy.java`)
+Instead of hardcoding the rules, we created pure interfaces (`TaxPolicy` and `DiscountPolicy`). Concrete classes like `StudentTaxPolicy`, `DefaultTaxPolicy`, `StaffDiscountPolicy`, and `StudentDiscountPolicy` implement the specific mathematical rules.
+- **Benefit:** If a new customer type gets a new discount, we just create a new class implementing the policy. We never edit the core checkout code.
+
+#### C. Extracted Rule Resolution (`PolicyResolver.java`)
+A `PolicyResolver` class is now responsible for deciding *which* rule applies based on the customer type string.
+
+#### D. Extracted Presentation (`InvoiceFormatter.java`)
+We removed every piece of text formatting from the checkout logic. Instead, `InvoiceFormatter.java` takes the raw variables (subtotal, tax, discount, total, order lines) and returns the beautifully formatted invoice string.
+- **Benefit:** Switching to a JSON invoice or HTML receipt means creating a new formatter without touching the checkout math.
+
+#### E. Decoupled Persistence (`FileStore.java` injected)
+The `InvoiceService` is given a `FileStore` when it's constructed (Dependency Injection). It just calls `store.save()` and doesn't care how the database works.
+
+#### F. Clean Orchestration (`CafeteriaSystem.java` & `InvoiceService.java`)
+The core manager is now just an orchestrator. `CafeteriaSystem` retrieves the correct policies using the `PolicyResolver`, and passes them to `InvoiceService`. `InvoiceService` calculates the price, applies the policies, formats the result, saves it, and prints it—each by delegating to the appropriate specialist.
+
+### 3. Teaching Guide: How to Explain This
+
+**Use the "Supermarket Checkout" Analogy:**
+> "Imagine a cashier at a supermarket. If the cashier had to manually calculate the wholesale cost of each item, determine the federal and state tax rules, apply specific coupons, and manually write out your entire receipt by hand, the line would never move.
+> 
+> What we did in this code is build modern supermarket lanes. 
+> - The **PricingService** is the barcode scanner calculating the base price.
+> - The **PolicyResolver** is the loyalty card swiper figuring out what rules apply to you.
+> - The **DiscountPolicy/TaxPolicy** are the automated registers doing the final math.
+> - The **InvoiceFormatter** is the receipt printer.
+> - The **FileStore** is the store's accounting system recording the sale.
+>
+> Our main `CafeteriaSystem` class is now just the person standing at the register orchestrating the machines. Because each responsibility is handled by a dedicated 'machine', we can upgrade the receipt printer or change the tax laws without retraining the cashier or breaking the barcode scanner!"

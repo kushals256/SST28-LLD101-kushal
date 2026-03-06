@@ -1,0 +1,41 @@
+### 1. The Core Problem with the Original Design
+
+Before the refactor, the `EligibilityEngine.evaluate()` method contained a long, rigid `if/else` chain. It manually checked if the student's CGR was below a hardcoded threshold, if their attendance was too low, if they had enough credits, and if they possessed any disciplinary flags.
+
+This design severely violated the **Open-Closed Principle (OCP)**. The Open-Closed Principle states that a class should be *open for extension but closed for modification*. In the old design, if the university decided to add a new rule (e.g., "Student must not have any unpaid library fines"), we would be forced to open up the `EligibilityEngine.java` file and modify its core internal logic by adding another `if/else` block. Editing core orchestrator files frequently increases the risk of introducing bugs or breaking existing logic.
+
+Additionally, the exact threshold values (like 75% for attendance) were hardcoded inside that same method, making them difficult to adjust without changing the code itself.
+
+### 2. How the Solution Was Architected (The Refactor)
+
+We solved this problem by extracting the individual logic of every single requirement into its own dedicated "Rule" class, hidden behind a common interface.
+
+#### A. The Shared Abstraction (`EligibilityRule.java`)
+We created a simple interface called `EligibilityRule` that guarantees every rule object will have an `evaluate(StudentProfile)` method returning an error string (or `null` if the rule passes).
+
+#### B. Individual Rule Units (`CgrRule.java`, `AttendanceRule.java`, etc.)
+Instead of an `if/else` chain, each condition now lives in its own small class implementing `EligibilityRule`.
+- `CgrRule` only checks if the CGR is high enough.
+- `AttendanceRule` only checks if attendance meets the threshold.
+- `CreditsRule` only checks earned credits.
+
+#### C. Dynamic Configuration (`RuleInput.java`)
+The threshold values (like `minCgr = 8.0` and `minAttendance = 75`) were pulled out into a configuration object called `RuleInput`. These values are now passed into the Rule classes when they are created via their constructors.
+
+#### D. The Refactored Engine (`EligibilityEngine.java`)
+The `EligibilityEngine` was rewritten to accept a `List<EligibilityRule>` in its constructor. Its new `evaluate()` method is incredibly simple: it just loops through that list of rules and calls `evaluate(student)` on each one. 
+
+- **Benefit:** The `EligibilityEngine` is now completely *Closed for Modification*. It doesn't know what CGR or attendance means. It just loops through a list.
+- **Benefit:** The system is *Open for Extension*. If we need to add a "Library Fines Rule", we just create a new `LibraryFinesRule` class and add it to the list in `Main.java`. We never touch the engine again.
+
+### 3. Teaching Guide: How to Explain This
+
+**Use the "Nightclub Bouncer" Analogy:**
+> "Imagine a nightclub bouncer who has to check IDs, enforce a dress code, and check a VIP list. If one single bouncer has to memorize all the rules, and the club manager suddenly decides to add a 'no sneakers' rule, they have to physically stop the bouncer, retrain them, and hope they don't forget the original rules. This is like our old code with the giant `if/else` chain.
+> 
+> What we did with the Open-Closed Principle is give the bouncer a **clipboard with a checklist**. 
+> - We created an interface called `EligibilityRule`—this is the empty checkbox on the clipboard.
+> - We wrote individual rules like `CgrRule` and `AttendanceRule`—these are the actual lines on the paper. 
+> - We handed the filled-out clipboard (a `List<EligibilityRule>`) to the `EligibilityEngine` (the bouncer).
+> 
+> Now, the bouncer's only job is to go down the checklist one by one. If they fail any check, they are rejected. If the university (the nightclub) decides to add a brand new rule tomorrow, we don't have to retrain the bouncer or modify his brain! We simply add a new line to the clipboard before handing it to him. Our engine is closed to modification, but entirely open to extension via the checklist."
