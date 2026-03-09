@@ -17,7 +17,8 @@ public class QuickCheck {
     public static void main(String[] args) {
         int n = 20_000;
 
-        MapDataSource ds = new MapDataSource();
+        MarkerStyleFactory factory = new MarkerStyleFactory();
+        MapDataSource ds = new MapDataSource(factory);
         List<MapMarker> markers = ds.loadMarkers(n);
 
         Set<Integer> identities = new HashSet<>();

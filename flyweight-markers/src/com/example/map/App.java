@@ -10,7 +10,8 @@ public class App {
     public static void main(String[] args) {
         int n = 30_000;
 
-        MapDataSource ds = new MapDataSource();
+        MarkerStyleFactory factory = new MarkerStyleFactory();
+        MapDataSource ds = new MapDataSource(factory);
         List<MapMarker> markers = ds.loadMarkers(n);
 
         new MapRenderer().render(markers);

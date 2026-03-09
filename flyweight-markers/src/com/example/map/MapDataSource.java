@@ -22,6 +22,12 @@ public class MapDataSource {
     private static final String[] COLORS = {"RED", "BLUE", "GREEN", "ORANGE"};
     private static final int[] SIZES = {10, 12, 14, 16};
 
+    private final MarkerStyleFactory factory;
+
+    MapDataSource(MarkerStyleFactory factory) {
+        this.factory = factory;   
+    }
+
     public List<MapMarker> loadMarkers(int count) {
         Random rnd = new Random(7);
         List<MapMarker> out = new ArrayList<>(count);
@@ -37,7 +43,7 @@ public class MapDataSource {
             int size = SIZES[rnd.nextInt(SIZES.length)];
             boolean filled = rnd.nextBoolean();
 
-            out.add(new MapMarker(lat, lng, label, shape, color, size, filled));
+            out.add(new MapMarker(lat, lng, label, factory.get(shape, color, size, filled)));
         }
         return out;
     }
