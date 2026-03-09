@@ -1,0 +1,43 @@
+### 1. The Core Problem with the Original Design
+
+In the original design, there was a base class called `NotificationSender` with a primary `send(Notification)` method. Three subclasses implemented it: `EmailSender`, `SmsSender`, and `WhatsAppSender`.
+
+However, the subclasses secretly restricted or changed the rules of the base contract, violating the **Liskov Substitution Principle (LSP)**:
+- `WhatsAppSender` secretly checked if the phone number started with a `+`. If it didn't, it would fail the send request. This tightened the base preconditions (which only required a phone number to exist).
+- `EmailSender` silently truncated long messages instead of failing or accepting them fully, altering the expected semantics of "sending a message".
+- `SmsSender` ignored the `subject` field completely, even though the base `Notification` contract implied it might be used.
+
+Because these subclasses behaved radically differently regarding what inputs they accepted and how they manipulated data, a caller could not simply swap one `NotificationSender` for another without encountering nasty runtime bugs or writing explicit `if (sender instanceof WhatsAppSender)` guard checks.
+
+### 2. How the Solution Was Architected (The Refactor)
+
+To fix this LSP violation, we used the **Template Method Pattern** to separate the base contract from the subclass-specific validation rules.
+
+#### A. The Template Method (`NotificationSender.java`)
+We transformed the `send(Notification)` method into a `final` template method. This means subclasses are literally blocked from overriding the core sending pipeline. The base method now guarantees:
+1. It will always check if the body is empty.
+2. It will always check if the body exceeds the `config.maxLen`.
+3. It will call a special `validateSpecific(Notification)` hook for subclasses.
+4. It will wrap the actual `sendNotification()` in a robust `try/catch` block and write to the audit log.
+
+- **Benefit:** The core contract (audit logging, length validation, error catching) is now flawlessly consistent across every single notification channel. 
+
+#### B. The Validation Hook (`validateSpecific`)
+Instead of `WhatsAppSender` secretly exploding during the `send` method, it now overrides the `validateSpecific(Notification)` method.
+If the number doesn't start with a `+`, it gracefully returns a `SendResult.failure()`. The base class catches this failure and logs it properly, rather than allowing an unexpected exception to bubble up to the caller.
+
+#### C. The Subclass Implementations (`sendNotification`)
+The subclasses now only implement `sendNotification()`, knowing that by the time this method is called, the data has been thoroughly vetted by both the base class and their own `validateSpecific` hook. Furthermore, configuration values like `maxLen` are injected via `SenderConfig`, preventing issues like `EmailSender` secretly truncating data on its own.
+
+### 3. Teaching Guide: How to Explain This
+
+**Use the "Franchise Restaurant" Analogy:**
+> "Imagine a global fast-food franchise (the Base Class). The franchise has a strict contract for making a burger: Toast bun, add meat, add toppings, serve to customer. 
+> 
+> In the bad code (LSP violation), the manager of the New York branch (a Subclass) secretly decides to throw away half the meat before serving it (like `EmailSender` truncating messages). The manager in London screams at customers wearing bad shoes (like `WhatsAppSender` rejecting non `+` phone numbers). As a regional director, you can't trust ANY of your restaurants because you never know what secret, weird rules they've invented. You can't substitute one restaurant for another.
+>
+> What we did with our Liskov Refactor is enforce a **Franchise Handbook (Template Method)**.
+> - The handbook states EXACTLY how an order is taken and error-handled. No branch is allowed to change this (`final send()` method).
+> - However, we gave the branches an official way to validate local ingredients (`validateSpecific()`). 
+> 
+> Now, the London branch can legally and politely decline local ingredients through the proper channels, instead of screaming at customers unexpectedly. Because every branch now strictly follows the handbook, the regional director can interact with any restaurant in the exact same reliable way."

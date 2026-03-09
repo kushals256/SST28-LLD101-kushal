@@ -1,0 +1,47 @@
+### 1. The Core Problem with the Original Design
+
+In the original design, there was a base interface called `Exporter` with a single method: `export(ExportRequest)`. Various classes like `PdfExporter`, `CsvExporter`, and `JsonExporter` implemented this interface.
+
+However, the subclasses secretly changed the rules of the contract, violating the **Liskov Substitution Principle (LSP)**.
+- The `PdfExporter` secretly decided it couldn't handle text longer than 20 characters and would throw a runtime exception if it was. (This *tightened* the preconditions of the base class—the base class said "give me any request", but PDF said "no, only short ones").
+- The `JsonExporter` threw exceptions if the request was `null` in a way other exporters didn't. 
+
+Because of this, a caller could not simply loop through a `List<Exporter>` and reliably call `export()`. They had to use `if (exporter instanceof PdfExporter)` to write special safety checks. This breaks Polymorphism and ruins the abstraction.
+
+### 2. How the Solution Was Architected (The Refactor)
+
+We solved this problem by enforcing a transparent, mathematically sound contract.
+
+#### A. The New Base Contract (`Exporter.java`)
+We added a new method to the interface:
+```java
+boolean supports(ExportRequest req);
+```
+This is a game-changer. Instead of subclasses secretly throwing exceptions when they don't like an input, the interface now forces every subclass to publicly declare whether it can handle the input *before* doing any work.
+
+#### B. The Subclass Implementations
+- **`PdfExporter`**: Implements `supports()` returning `false` if the text is over 20 characters. It no longer silently explodes on valid requests; it politely declines them beforehand.
+- **`CsvExporter`**: Always returns `true` for `supports()` because it can export anything.
+- **`JsonExporter`**: Returns `false` if the request is `null`.
+
+#### C. The Safe Execution Flow
+Now, any code that uses an `Exporter` operates completely safely without needing `instanceof` checks. The caller simply does:
+```java
+if (exporter.supports(request)) {
+    ExportResult result = exporter.export(request);
+}
+```
+
+- **Benefit:** The `export()` method now has an unbreakable contract. As long as `supports()` returns true, `export()` is guaranteed to succeed without throwing parameter-related exceptions.
+- **Benefit:** We restored true polymorphic interchangeability. We can swap `PdfExporter` with `CsvExporter` seamlessly, fully satisfying the Liskov Substitution Principle.
+
+### 3. Teaching Guide: How to Explain This
+
+**Use the "Delivery Driver" Analogy:**
+> "Imagine you run a logistics company with a generic contract called `DeliveryDriver`. The contract simply says `deliver(Package)`. 
+> 
+> In the bad code (LSP violation), you hand a 50lb package to the Bicycle Driver, and he immediately throws it on the ground and screams at you because his bike can't handle 50lbs. You hand a package to the Motorcycle Driver when it's raining, and he refuses to go. As the manager, you are terrified of handing packages to drivers because you constantly have to memorize their hidden personal rules.
+> 
+> What we did with the Liskov Substitution Principle is add a new rule to the `DeliveryDriver` contract: `canDeliver(Package)`.
+> 
+> Now, before you hand out the packages, you simply ask the drivers, 'Can you deliver this?' The Bicycle Driver politely says 'No, it's too heavy,' and you give it to the Truck Driver instead. Because the contract forces everyone to answer `canDeliver()`, you don't have to memorize their secret constraints anymore. Every single driver is now fully swappable and safely usable."
